@@ -63,6 +63,8 @@ bool Blite::connectWiFi(const char *username, const char *password){
     } else {
         Serial.println("connected to wifi");
         Serial.println(WiFi.localIP());
+        this->printTxt("connected to wifi");
+        this->printTxt(WiFi.localIP().toString().c_str());
         return 1;
     }
     retry++;
@@ -75,6 +77,11 @@ bool Blite::smartConnectWiFi(){
     WiFiManager wm;
     bool res;
     res = wm.autoConnect("Buildybee-smart-config","buildybee"); // password protected ap
+    if(res){
+      this->printTxt("Connected to wifi..!!");
+      this->printTxt("local IP:");
+      this->printTxt(WiFi.localIP().toString().c_str());
+    }
     return res;
 }
 
@@ -92,6 +99,9 @@ bool Blite::APServer() {
     // Connecting WiFi
     WiFi.softAPConfig(local_IP,gateway,subnet);
     WiFi.mode(WIFI_AP);
+    this->printTxt("Running local Wifi");
+    this->printTxt("SSID: buidybee_rc_car");
+    this->printTxt("IP: 192.168.4.1");
     return WiFi.softAP(ssid);
 }
 bool Blite::buttonPressed() {
@@ -108,6 +118,12 @@ void Blite::setup(){
   this->defineM12(true);
   this->defineM34(true);
   this->speed = 100;
+  this->display.init();
+  this->display.clear();
+  this->display.setFont(ArialMT_Plain_10);
+  this->display.setTextAlignment(TEXT_ALIGN_LEFT);
+  this->lineNo = 0;
+  this->printTxt("Welcome Buildybees..!!");
   String newHostname = "buildybee";
   WiFi.hostname(newHostname.c_str());
   WiFi.disconnect();
@@ -194,5 +210,10 @@ void Blite::stopMotor(){
   digitalWrite(M2,LOW);
   digitalWrite(M3,LOW);
   digitalWrite(M4,LOW);
+}
 
+void Blite::printTxt(const char *dispalytxt){
+this->display.drawString(0,this->lineNo*10+2,dispalytxt);
+this->display.display();
+this->lineNo++;
 }
