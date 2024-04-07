@@ -17,39 +17,65 @@ int Blite::getIO(const char * io){
     return -1;
     
 }
+
 void Blite::reversePolarityM12(){
     this->defineM12(false);
 }
 void Blite::reversePolarityM34(){
     this->defineM34(false);
 }
-void Blite::moveForward(){
+
+void Blite::turnM12(bool direction){
+  if (direction) {
     analogWrite(this->m1,this->speed);
     digitalWrite(this->m2,LOW);
-    analogWrite(this->m4,this->speed);
-    digitalWrite(this->m3,LOW);
-}
-void Blite::moveBackward(){
+  } else {
     analogWrite(this->m2,this->speed);
     digitalWrite(this->m1,LOW);
+  }
+}
+void Blite::stopM12(){
+  digitalWrite(this->m1,LOW);
+  digitalWrite(this->m2,LOW);
+}
+void Blite::turnM34(bool direction){
+  if (direction) {
     analogWrite(this->m3,this->speed);
     digitalWrite(this->m4,LOW);
-}
-void Blite::turnRight(){
-    digitalWrite(this->m1,LOW);
-    digitalWrite(this->m2,LOW);
+  } else {
     analogWrite(this->m4,this->speed);
     digitalWrite(this->m3,LOW);
+  }
+}
+void Blite::stopM34(){
+  digitalWrite(this->m3,LOW);
+  digitalWrite(this->m4,LOW);
+}
+
+void Blite::moveForward(){
+    this->turnM12(true);
+    this->turnM34(false);
+}
+void Blite::moveBackward(){
+    this->turnM12(false);
+    this->turnM34(true);
+}
+void Blite::turnRight(){
+    this->turnM12(false);
+    this->turnM34(false);
 }
 void Blite::turnLeft(){
-    analogWrite(this->m1,this->speed);
-    digitalWrite(this->m2,LOW);
-    digitalWrite(this->m3,LOW);
-    digitalWrite(this->m4,LOW);
+    this->turnM12(true);
+    this->turnM34(true);
+}
+void Blite::stopMotor(){
+  this->stopM12();
+  this->stopM34();
 }
 void Blite::setSpeed(int s){
     this->speed = s ;
 }
+
 bool Blite::connectWiFi(const char *username, const char *password){
     WiFi.disconnect();
     WiFi.mode(WIFI_STA);
@@ -84,7 +110,6 @@ bool Blite::smartConnectWiFi(){
     }
     return res;
 }
-
 bool Blite::APServer() {
     if (WiFi.isConnected()){
         if (WiFi.disconnect()){
@@ -119,6 +144,7 @@ void Blite::setup(){
   this->defineM34(true);
   this->speed = 100;
   this->display.init();
+  this->display.flipScreenVertically();
   this->display.clear();
   this->display.setFont(ArialMT_Plain_10);
   this->display.setTextAlignment(TEXT_ALIGN_LEFT);
@@ -140,7 +166,6 @@ void Blite::blinkLed(int c){
     delay(500);
   }
 }
-
 int Blite::readADC(){
     return analogRead(ADC1);
 }
@@ -152,19 +177,16 @@ void Blite::setupServer(String &html_content) {
     this->webServer.begin();
     this->serverSetupDone = true;
 }
-
 void Blite::renderServer() {
     this->webServer.handleClient();
     this->otaLoop();
 }
-
 void Blite::smartRenderServer(String &html_content){
     if (!this->serverSetupDone) {
         this->setupServer(html_content);
     }
     this->renderServer();
 }
-
 void Blite::otaSetup(){
 
   ArduinoOTA.onStart([]() {
@@ -200,16 +222,8 @@ void Blite::otaSetup(){
   });
   ArduinoOTA.begin();
 }
-
 void Blite::otaLoop(){
     ArduinoOTA.handle();
-}
-
-void Blite::stopMotor(){
-  digitalWrite(M1,LOW);
-  digitalWrite(M2,LOW);
-  digitalWrite(M3,LOW);
-  digitalWrite(M4,LOW);
 }
 
 void Blite::printTxt(const char *dispalytxt){

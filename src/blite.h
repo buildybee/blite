@@ -40,7 +40,11 @@ void stopMotor();
 void setSpeed(int speed);
 
 void reversePolarityM12();
+void turnM12(bool direction);
+void stopM12();
 void reversePolarityM34();
+void turnM34(bool direction);
+void stopM34();
 
 int getIO(const char * io);
 bool buttonPressed();
