@@ -1,4 +1,5 @@
 #include <blite.h>
+#include <ESP8266WebServer.h>
 #include <WebSocketsServer.h>
 #include "remote.h"
 
@@ -13,9 +14,8 @@
 
 
 Blite mybot;
+ESP8266WebServer wifiRemoteControl(80);
 WebSocketsServer webSocket = WebSocketsServer(81);  // WebSocket server on port 81
-String html_string = REMOTE_HTML_CONTENT;
-
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length) {
   switch (type) {
     case WStype_DISCONNECTED:
@@ -79,11 +79,19 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
 void setup(){
     mybot.setup();
     Serial.begin(115200);
-    mybot.APServer();
+    mybot.smartConnectWiFi();
     webSocket.begin();
     webSocket.onEvent(webSocketEvent);
+    wifiRemoteControl.on("/", HTTP_GET, []() {
+      Serial.println("Web Server: received a web page request");
+       String html = REMOTE_HTML_CONTENT;
+       wifiRemoteControl.send(200, "text/html", html);
+   });
+   wifiRemoteControl.begin();
+
 }
 void loop(){
-    mybot.smartRenderServer(html_string);
+    wifiRemoteControl.handleClient();
     webSocket.loop();
+
 }

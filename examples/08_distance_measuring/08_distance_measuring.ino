@@ -1,4 +1,4 @@
-#include "blite.h"
+#include <blite.h>
 
 //define sound velocity in cm/uS
 #define SOUND_VELOCITY 0.034
