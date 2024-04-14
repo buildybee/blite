@@ -13,8 +13,14 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 
 void setup(){
     myBot.setup();
+    myBot.reversePolarityM12();
     Serial.begin(115200);
-    myBot.smartConnectWiFi();
+    delay(1000);
+    if (myBot.buttonPressed()){
+      myBot.APServer();
+    } else {
+      myBot.smartConnectWiFi();
+    }
     webSocket.begin();
     webSocket.onEvent(webSocketEvent);
 

@@ -1,15 +1,16 @@
 #include <blite.h>
 
 Blite myBot;
-int irLeft = myBot.getIO("io1");
-int irRight = myBot.getIO("io2");
-bool lineFollwerMode = false;
+int ir = myBot.getIO("io1");
+bool lineFollowerMode = false;
+int cs;
 
 void setup()
 {
   // Debug console
   Serial.begin(115200);
   myBot.setup();
+  myBot.reversePolarityM12();
   myBot.smartConnectWiFi();
 
 }
@@ -19,27 +20,22 @@ void loop()
   myBot.otaLoop();
 
   if(myBot.buttonPressed()) {
-    lineFollwerMode = !lineFollwerMode;
+    lineFollowerMode = !lineFollowerMode;
   }
-  if (lineFollwerMode){
-    Serial.print("Line Follower Mode");
-    if(digitalRead(irLeft)==LOW  && digitalRead(irRight)==LOW)
+  if (lineFollowerMode){
+      cs=digitalRead(ir);
+      
+    if(cs==HIGH)
     {
       myBot.moveForward();
     }
-    if(digitalRead(irLeft)==HIGH  && digitalRead(irRight)==LOW)
+    else if(cs==LOW)
     {
       myBot.turnRight();
     }
-    if(digitalRead(irLeft)==LOW  && digitalRead(irRight)==HIGH)
-    {
-      myBot.turnLeft();
-    }
-    if(digitalRead(irLeft)==HIGH  && digitalRead(irRight)==HIGH)
-    {
+    if (myBot.buttonPressed()){
+      lineFollowerMode = false;
       myBot.stopMotor();
-      lineFollwerMode = false;
-
     }
   }
 
