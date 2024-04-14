@@ -1,4 +1,4 @@
-//connect the blite dev board with b-rover: 
+//connect the blite dev board with b-rover: https://buildybee.github.io/beebotFullKit.html
 #include <blite.h>
 #include "remote.h"
 #include <WebSocketsServer.h>
