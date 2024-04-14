@@ -1,3 +1,4 @@
+//connect the blite dev board with b-rover: 
 #include <blite.h>
 #include "remote.h"
 #include <WebSocketsServer.h>

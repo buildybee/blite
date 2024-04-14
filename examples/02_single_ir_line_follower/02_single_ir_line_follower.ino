@@ -1,5 +1,7 @@
+//Connect a IR sensor or TCTR5000 module to IO1 and place the car on a black track with white background ground.
+//press the tactile button to start the line follower mode and press gain to stop line following mode.
+ 
 #include <blite.h>
-
 Blite myBot;
 int ir = myBot.getIO("io1");
 bool lineFollowerMode = false;

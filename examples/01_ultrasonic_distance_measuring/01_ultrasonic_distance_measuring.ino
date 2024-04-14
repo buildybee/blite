@@ -1,6 +1,6 @@
 #include <blite.h>
 
-//conncet the utrasonic sensor with 4 pin sensor
+//connect the ultrasonic sensor(HS-SR04) with 4 pin sensor
 
 //define sound velocity in cm/uS
 #define SOUND_VELOCITY 0.034
