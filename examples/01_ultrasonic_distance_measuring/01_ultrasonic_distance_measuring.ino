@@ -1,23 +1,29 @@
-#include "blite.h"
+#include <blite.h>
+
+//connect the ultrasonic sensor(HS-SR04) with 4 pin sensor
 
 //define sound velocity in cm/uS
 #define SOUND_VELOCITY 0.034
 #define CM_TO_INCH 0.393701
 
+Blite myBot;
+int trigPin = myBot.getIO("io3");
+int echoPin = myBot.getIO("io4");
+
 long duration;
 float distanceCm;
 float distanceInch;
 
-#define echoPin D1
-#define trigPin D2
-
 void setup() {
+  myBot.setup();
+  myBot.smartConnectWiFi();
   Serial.begin(115200); // Starts the serial communication
   pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
   pinMode(echoPin, INPUT); // Sets the echoPin as an Input
 }
 
 void loop() {
+  myBot.otaLoop();
   // Clears the trigPin
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
