@@ -4,6 +4,10 @@ const char *REMOTE_HTML_CONTENT = R"=====(
 <html>
 <head>
 <title>ESP8266 Control Car via Web</title>
+<p>
+Connection : <span id="ws_state" style="color:blue">closed</span>
+<button id="wc_conn" type="button" onclick="wc_onclick();">Connect</button><br>
+</p>
 <meta name="viewport" content="width=device-width, initial-scale=0.7, maximum-scale=1, user-scalable=no">
 <style type="text/css">
 body { text-align: center; font-size: 24px;}
@@ -119,9 +123,12 @@ var CMD_FORWARD  = 1;
 var CMD_BACKWARD = 2;
 var CMD_LEFT     = 4;
 var CMD_RIGHT    = 8;
-var CMD_PUSH     = 5;
-var CMD_SRVCLCK  = 6;
-var CMD_SRVACLCK = 9;
+var CMD_LIGHT     = 5;
+var CMD_REVM12  = 6;
+var CMD_REVM34 = 9;
+var CMD_SPD_1 = 10;
+var CMD_SPD_2 = 11;
+var CMD_SPD_3 = 12;
 var img_name_lookup = {
   [CMD_STOP]:     "stop",
   [CMD_FORWARD]:  "up",
@@ -201,17 +208,29 @@ function mouse_up(event)
     event.preventDefault();    
 }
 
-function wc_onclickpush() 
+function wc_onclicklights() 
 {   
-  send_command(CMD_PUSH);   
+  send_command(CMD_LIGHT);   
 }
-function wc_onclickservclck() 
+function wc_onclickrevm12() 
 {   
-  send_command(CMD_SRVCLCK);   
+  send_command(CMD_REVM12);   
 }
-function wc_onclickservaclck() 
+function wc_onclickrevm34() 
 {   
-  send_command(CMD_SRVACLCK);   
+  send_command(CMD_REVM34);   
+}
+function wc_onclickspd1() 
+{   
+  send_command(CMD_SPD_1);   
+}
+function wc_onclickspd2() 
+{   
+  send_command(CMD_SPD_2);   
+}
+function wc_onclickspd3() 
+{   
+  send_command(CMD_SPD_3);   
 }
 
 function send_command(cmd) 
@@ -233,17 +252,20 @@ window.onload = init;
     <div id="8" class="arrow right"></div>
     <div id="4" class="arrow left"></div>
 </div>
-<p>
-WebSocket : <span id="ws_state" style="color:blue">closed</span>
-<button id="wc_conn" type="button" onclick="wc_onclick();">Connect</button><br>
-</p>
-<button id="wc_push" type="button" onclick="wc_onclickpush();">Push</button>
-<h style="font-size:17px; color:blue">SERVO</h>
-<button id="wc_servclck" type="button" onclick="wc_onclickservclck();">Clockwise</button>
-<button id="wc_servaclck" type="button" onclick="wc_onclickservaclck();">AntiClockwise</button>
+<div id="5" class="speedControl">
+	<h style="font-size:17px; color:blue">SPEED</h>
+	<button id="speed1" type="button" onclick="wc_onclickspd1();">SLOW</button>
+	<button id="speed2" type="button" onclick="wc_onclickspd2();">MEDIUM</button>
+	<button id="speed3" type="button" onclick="wc_onclickspd3();">FAST</button>
+</div>
+<button id="wc_push" type="button" onclick="wc_onclicklights();">LIGHTS</button>
+<br>
+<h style="font-size:17px; color:blue">POLARITY</h>
+<button id="wc_revm12" type="button" onclick="wc_onclickrevm12();">ReverseM12</button>
+<button id="wc_revm34" type="button" onclick="wc_onclickrevm34();">ReverseM34</button>
 <br>
 <br>
-<div class="sponsor">Sponsored by <a href="https://paulsayan.wixsite.com/buildybee">Buidybee</a></div>
+<div class="sponsor">Sponsored by <a href="https://buildybee.github.io/">Buidybee</a></div>
 </body>
 </html>
 )=====";

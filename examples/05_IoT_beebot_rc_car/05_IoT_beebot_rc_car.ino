@@ -8,13 +8,21 @@
 #define CMD_BACKWARD 2
 #define CMD_LEFT 4
 #define CMD_RIGHT 8
+#define CMD_LIGHT 5
+#define CMD_REVM12 6
+#define CMD_REVM34 9
+#define CMD_SPD_1 10
+#define CMD_SPD_2 11
+#define CMD_SPD_3 12
 
 Blite myBot;
 WebSocketsServer webSocket = WebSocketsServer(81);
+int led = myBot.getIO("io1");
 
 void setup(){
     myBot.setup();
-    myBot.reversePolarityM12();
+    pinMode(led,OUTPUT);
+    digitalWrite(led, HIGH);
     Serial.begin(115200);
     delay(1000);
     if (myBot.buttonPressed()){
@@ -70,6 +78,30 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t length)
         case CMD_RIGHT:
           Serial.println("Turn Right");
            myBot.turnRight();
+          break;
+        case CMD_LIGHT:
+          Serial.println("Changing LIGHT status");
+          digitalWrite(led, !digitalRead(led));
+          break;
+        case CMD_REVM12:
+          Serial.println("Reverse polarity for M12");
+          myBot.reversePolarityM12();
+          break;
+        case CMD_REVM34:
+          Serial.println("Reverse polarity for M34");
+          myBot.reversePolarityM34();
+          break;
+        case CMD_SPD_1:
+          Serial.println("Speed set to 80");
+           myBot.setSpeed(80);
+          break;
+        case CMD_SPD_2:
+          Serial.println("Speed set to 160");
+           myBot.setSpeed(160);
+          break;
+        case CMD_SPD_3:
+          Serial.println("Speed set to 255");
+           myBot.setSpeed(255);
           break;
         default:
           Serial.println("Unknown command");

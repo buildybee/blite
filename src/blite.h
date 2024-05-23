@@ -66,24 +66,6 @@ ESP8266WebServer webServer = ESP8266WebServer(80);
 SSD1306Wire display = SSD1306Wire(0x3c, I2C_SDA, I2C_SCL);
 bool serverSetupDone = false;
 
-void defineM12(bool polarity){
-    if (polarity){
-        this->m1 = M1;
-        this->m2 = M2;
-    } else {
-        this->m2 = M1;
-        this->m1 = M2;
-    }
-};
-void defineM34(bool polarity){
-     if (polarity){
-        this->m3 = M3;
-        this->m4 = M4;
-    } else {
-        this->m4 = M3;
-        this->m3 = M4;
-    }
-};
 };
 #endif
 #endif
