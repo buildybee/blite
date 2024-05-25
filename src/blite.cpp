@@ -19,10 +19,22 @@ int Blite::getIO(const char * io){
 }
 
 void Blite::reversePolarityM12(){
-    this->defineM12(false);
+    if (this->m2 == M2){
+        this->m2 = M1;
+        this->m1 = M2;
+    } else {
+        this->m1 = M1;
+        this->m2 = M2;
+    }
 }
 void Blite::reversePolarityM34(){
-    this->defineM34(false);
+    if (this->m3 == M3){
+        this->m4 = M3;
+        this->m3 = M4;
+    } else {
+        this->m3 = M3;
+        this->m4 = M4;
+    }
 }
 
 void Blite::turnM12(bool direction){
@@ -139,10 +151,12 @@ void Blite::setup(){
   pinMode(M2,OUTPUT);
   pinMode(M3,OUTPUT);
   pinMode(M4,OUTPUT);
+  this->m1 = M1;
+  this->m2 = M2;
+  this->m3 = M3;
+  this->m4 = M4;
   this->stopMotor();
-  this->defineM12(true);
-  this->defineM34(true);
-  this->speed = 100;
+  this->speed = 255;
   this->display.init();
   this->display.flipScreenVertically();
   this->display.clear();
@@ -166,6 +180,8 @@ void Blite::blinkLed(int c){
     delay(500);
   }
 }
+
+
 int Blite::readADC(){
     return analogRead(ADC1);
 }
