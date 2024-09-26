@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drone Joystick Control</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+
+    #controls {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .joystick-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 20px;
+    }
+
+    .joystick {
+      width: 210px;
+      height: 210px;
+      border-radius: 50%;
+      background-color: #ccc;
+      position: relative;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .stick {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background-color: #333;
+      position: absolute;
+      top: 55px;
+      left: 55px;
+      cursor: pointer;
+    }
+
+    #connect-button, #esc-button, #sendPID, #getPID {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1em;
+      cursor: pointer;
+      border: none;
+      color: white;
+    }
+
+    .status-disconnected {
+      background-color: red;
+    }
+
+    .status-connected {
+      background-color: green;
+    }
+
+    .status-connecting,
+    .status-disconnecting {
+      background-color: orange;
+    }
+
+    @media (max-width: 600px) {
+      #controls {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .joystick {
+        width: 168px;
+        height: 168px;
+      }
+
+      .stick {
+        width: 80px;
+        height: 80px;
+        top: 44px;
+        left: 44px;
+      }
+    }
+
+    .pid-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .pid-group {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 10px;
+    }
+
+    .pid-group label {
+      margin-right: 10px;
+    }
+
+    .pid-group input {
+      width: 60px;
+    }
+  </style>
+</head>
+<body>
+  <p>Drone Orientation - Pitch: <span id="received-pitch" class="fixed-width">0</span> | Roll: <span id="received-roll" class="fixed-width">0</span> | Yaw: <span id="received-yaw" class="fixed-width">0</span></p>
+  
+  <div id="controls">
+    <div class="joystick-container">
+      <div class="joystick" id="left-joystick">
+        <div class="stick" id="left-stick"></div>
+      </div>
+      <p>Throttle/Yaw: <span id="throttle">0</span> | <span id="yaw">0</span></p>
+    </div>
+
+    <div class="joystick-container">
+      <div class="joystick" id="right-joystick">
+        <div class="stick" id="right-stick"></div>
+      </div>
+      <p>Pitch/Roll: <span id="pitch">0</span> | <span id="roll">0</span></p>
+    </div>
+  </div>
+
+  <button id="esc-button">Start ESC</button>
+  <button id="connect-button" class="status-disconnected">Connect</button>
+
+  <div class="pid-container">
+    <div class="pid-group">
+      <label for="kpX">Kp X:</label>
+      <input type="number" id="kpX" value="0.0">
+      <label for="kiX">Ki X:</label>
+      <input type="number" id="kiX" value="0.0">
+      <label for="kdX">Kd X:</label>
+      <input type="number" id="kdX" value="0.0">
+    </div>
+    <div class="pid-group">
+      <label for="kpY">Kp Y:</label>
+      <input type="number" id="kpY" value="0.0">
+      <label for="kiY">Ki Y:</label>
+      <input type="number" id="kiY" value="0.0">
+      <label for="kdY">Kd Y:</label>
+      <input type="number" id="kdY" value="0.0">
+    </div>
+    <div class="pid-group">
+      <label for="kpZ">Kp Z:</label>
+      <input type="number" id="kpZ" value="0.0">
+      <label for="kiZ">Ki Z:</label>
+      <input type="number" id="kiZ" value="0.0">
+      <label for="kdZ">Kd Z:</label>
+      <input type="number" id="kdZ" value="0.0">
+    </div>
+  </div>
+
+  <button id="sendPID">Send PID Constants</button>
+  <button id="getPID">Get Current PID Constants</button>
+
+  <script>
+    const throttleDisplay = document.getElementById('throttle');
+    const yawDisplay = document.getElementById('yaw');
+    const pitchDisplay = document.getElementById('pitch');
+    const rollDisplay = document.getElementById('roll');
+    const connectButton = document.getElementById('connect-button');
+    const escButton = document.getElementById('esc-button');
+    let websocket;
+    const droneAddress = "ws://192.168.4.1:81"; // Replace with the actual IP of NodeMCU
+    let isConnected = false;
+    let isEscStarted = false;
+
+    function connectWebSocket() {
+      connectButton.textContent = "Connecting...";
+      connectButton.className = "status-connecting";
+      websocket = new WebSocket(droneAddress);
+
+      websocket.onopen = function () {
+        console.log("WebSocket Connected");
+        isConnected = true;
+        updateConnectionStatus(true);
+      };
+
+      websocket.onclose = function () {
+        console.log("WebSocket Disconnected");
+        isConnected = false;
+        updateConnectionStatus(false);
+      };
+
+      websocket.onerror = function (error) {
+        console.error("WebSocket Error", error);
+        updateConnectionStatus(false);
+      };
+
+      websocket.onmessage = function (event) {
+        const data = event.data;
+        if (data.includes('|')) {
+          const orientationData = data.split('|');
+          const receivedPitch = parseInt(orientationData[0], 10);
+          const receivedRoll = parseInt(orientationData[1], 10);
+          const receivedYaw = parseInt(orientationData[2], 10);
+          document.getElementById('received-pitch').textContent = receivedPitch;
+          document.getElementById('received-roll').textContent = receivedRoll;
+          document.getElementById('received-yaw').textContent = receivedYaw;
+        }
+      };
+    }
+
+    function disconnectWebSocket() {
+      if (websocket) {
+        connectButton.textContent = "Disconnecting...";
+        connectButton.className = "status-disconnecting";
+        websocket.close();
+      }
+    }
+
+    function updateConnectionStatus(connected) {
+      if (connected) {
+        connectButton.textContent = "Disconnect";
+        connectButton.className = "status-connected";
+      } else {
+        connectButton.textContent = "Connect";
+        connectButton.className = "status-disconnected";
+      }
+    }
+
+    connectButton.addEventListener('click', function () {
+      if (isConnected) {
+        disconnectWebSocket();
+      } else {
+        connectWebSocket();
+      }
+    });
+
+    escButton.addEventListener('click', function () {
+      if (isConnected && websocket.readyState === WebSocket.OPEN) {
+        if (escStarted) {
+          websocket.send('stopESC');
+          escButton.textContent = 'Start ESC';
+        } else {
+          websocket.send('startESC');
+          escButton.textContent = 'Stop ESC';
+        }
+        escStarted = !escStarted;
+      }
+    });
+
+    function setupJoystick(joystickElement, stickElement, updateCallback) {
+      const centerX = joystickElement.offsetWidth / 2;
+      const centerY = joystickElement.offsetHeight / 2;
+      const maxDistance = centerX;
+
+      const moveStick = (x, y) => {
+        const distance = Math.sqrt(x * x + y * y);
+        if (distance > maxDistance) {
+          x = (x / distance) * maxDistance;
+          y = (y / distance) * maxDistance;
+        }
+        stickElement.style.transform = `translate(${x}px, ${y}px)`;
+        updateCallback(x, y, maxDistance);
+      };
+
+      const resetStick = () => {
+        stickElement.style.transform = 'translate(0px, 0px)';
+        updateCallback(0, 0, maxDistance);
+      };
+
+      let active = false;
+      joystickElement.addEventListener('pointerdown', (e) => {
+        active = true;
+        joystickElement.setPointerCapture(e.pointerId);
+      });
+
+      joystickElement.addEventListener('pointermove', (e) => {
+        if (!active) return;
+        const x = e.clientX - centerX - joystickElement.getBoundingClientRect().left;
+        const y = e.clientY - centerY - joystickElement.getBoundingClientRect().top;
+        moveStick(x, y);
+      });
+
+      joystickElement.addEventListener('pointerup', () => {
+        active = false;
+        resetStick();
+      });
+
+      joystickElement.addEventListener('pointercancel', () => {
+        active = false;
+        resetStick();
+      });
+    }
+
+    setupJoystick(
+      document.getElementById('left-joystick'),
+      document.getElementById('left-stick'),
+      (x, y, maxDistance) => {
+        const throttle = Math.round((y / maxDistance) * 100);
+        const yaw = Math.round((x / maxDistance) * 100);
+        throttleDisplay.textContent = throttle;
+        yawDisplay.textContent = yaw;
+
+        if (isConnected && websocket.readyState === WebSocket.OPEN) {
+          websocket.send(`T:${throttle}|Y:${yaw}`);
+        }
+      }
+    );
+
+    setupJoystick(
+      document.getElementById('right-joystick'),
+      document.getElementById('right-stick'),
+      (x, y, maxDistance) => {
+        const pitch = Math.round((y / maxDistance) * 100);
+        const roll = Math.round((x / maxDistance) * 100);
+        pitchDisplay.textContent = pitch;
+        rollDisplay.textContent = roll;
+
+        if (isConnected && websocket.readyState === WebSocket.OPEN) {
+          websocket.send(`P:${pitch}|R:${roll}`);
+        }
+      }
+    );
+
+    function sendPIDConstants() {
+      if (isConnected && websocket.readyState === WebSocket.OPEN) {
+        const kpX = parseFloat(document.getElementById('kpX').value);
+        const kiX = parseFloat(document.getElementById('kiX').value);
+        const kdX = parseFloat(document.getElementById('kdX').value);
+
+        const kpY = parseFloat(document.getElementById('kpY').value);
+        const kiY = parseFloat(document.getElementById('kiY').value);
+        const kdY = parseFloat(document.getElementById('kdY').value);
+
+        const kpZ = parseFloat(document.getElementById('kpZ').value);
+        const kiZ = parseFloat(document.getElementById('kiZ').value);
+        const kdZ = parseFloat(document.getElementById('kdZ').value);
+
+        const pidData = `KPX:${kpX}|KIX:${kiX}|KDX:${kdX}|KPY:${kpY}|KIY:${kiY}|KDY:${kdY}|KPZ:${kpZ}|KIZ:${kiZ}|KDZ:${kdZ}`;
+        websocket.send(pidData);
+      }
+    }
+
+    document.getElementById('sendPID').addEventListener('click', sendPIDConstants);
+
+    function requestPIDConstants() {
+      if (isConnected && websocket.readyState === WebSocket.OPEN) {
+        websocket.send('REQUEST_PID');
+        websocket.onmessage = function (event) {
+          const data = event.data;
+          const pidValues = data.split('|');
+          pidValues.forEach((item) => {
+            const [key, value] = item.split(':');
+            if (key && value) {
+              document.getElementById(key).value = parseFloat(value);
+            }
+          });
+        };
+      }
+    }
+
+    document.getElementById('getPID').addEventListener('click', requestPIDConstants);
+  </script>
+</body>
+</html>
