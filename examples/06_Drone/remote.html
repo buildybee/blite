@@ -50,8 +50,12 @@
       left: 55px;
       cursor: pointer;
     }
+    
+    #esc-button, #sendPID, #getPID {
+      background-color: #0066cc;
+    }
 
-    #connect-button, #esc-button, #sendPID, #getPID {
+    #connect-button {
       margin-top: 20px;
       padding: 10px 20px;
       font-size: 1em;
@@ -330,7 +334,7 @@
     );
 
     function sendPIDConstants() {
-      if (isConnected && websocket.readyState === WebSocket.OPEN) {
+    if (isConnected && websocket.readyState === WebSocket.OPEN) {
         const kpX = parseFloat(document.getElementById('kpX').value);
         const kiX = parseFloat(document.getElementById('kiX').value);
         const kdX = parseFloat(document.getElementById('kdX').value);
@@ -343,10 +347,22 @@
         const kiZ = parseFloat(document.getElementById('kiZ').value);
         const kdZ = parseFloat(document.getElementById('kdZ').value);
 
-        const pidData = `KPX:${kpX}|KIX:${kiX}|KDX:${kdX}|KPY:${kpY}|KIY:${kiY}|KDY:${kdY}|KPZ:${kpZ}|KIZ:${kiZ}|KDZ:${kdZ}`;
-        websocket.send(pidData);
-      }
+        const pidData = {
+            kpX: kpX,
+            kiX: kiX,
+            kdX: kdX,
+            kpY: kpY,
+            kiY: kiY,
+            kdY: kdY,
+            kpZ: kpZ,
+            kiZ: kiZ,
+            kdZ: kdZ
+        };
+
+        websocket.send(JSON.stringify(pidData));
     }
+}
+
 
     document.getElementById('sendPID').addEventListener('click', sendPIDConstants);
 
