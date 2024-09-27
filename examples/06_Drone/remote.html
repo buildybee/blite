@@ -51,7 +51,11 @@
       cursor: pointer;
     }
 
-    #connect-button, #esc-button, #sendPID, #getPID {
+    #esc-button, #sendPID, #getPID {
+      background-color: #0066cc;
+    }
+
+    #connect-button {
       margin-top: 20px;
       padding: 10px 20px;
       font-size: 1em;
@@ -244,14 +248,14 @@
 
     escButton.addEventListener('click', function () {
       if (isConnected && websocket.readyState === WebSocket.OPEN) {
-        if (escStarted) {
+        if (isEscStarted) {
           websocket.send('stopESC');
           escButton.textContent = 'Start ESC';
         } else {
           websocket.send('startESC');
           escButton.textContent = 'Stop ESC';
         }
-        escStarted = !escStarted;
+        isEscStarted = !isEscStarted;
       }
     });
 
@@ -299,38 +303,52 @@
       });
     }
 
-    setupJoystick(
-      document.getElementById('left-joystick'),
-      document.getElementById('left-stick'),
-      (x, y, maxDistance) => {
-        const throttle = Math.round((y / maxDistance) * 100);
-        const yaw = Math.round((x / maxDistance) * 100);
-        throttleDisplay.textContent = throttle;
-        yawDisplay.textContent = yaw;
+// Left joystick (Throttle, Yaw)
+setupJoystick(
+  document.getElementById('left-joystick'),
+  document.getElementById('left-stick'),
+  (x, y, maxDistance) => {
+    const throttle = Math.round(-1 * (y / maxDistance) * 100);
+    const yaw = Math.round((x / maxDistance) * 100);
 
-        if (isConnected && websocket.readyState === WebSocket.OPEN) {
-          websocket.send(`T:${throttle}|Y:${yaw}`);
-        }
-      }
-    );
+    throttleDisplay.textContent = throttle;
+    yawDisplay.textContent = yaw;
 
-    setupJoystick(
-      document.getElementById('right-joystick'),
-      document.getElementById('right-stick'),
-      (x, y, maxDistance) => {
-        const pitch = Math.round((y / maxDistance) * 100);
-        const roll = Math.round((x / maxDistance) * 100);
-        pitchDisplay.textContent = pitch;
-        rollDisplay.textContent = roll;
+    // Send throttle and yaw data via WebSocket if connected
+    if (isConnected && websocket.readyState === WebSocket.OPEN) {
+      const joystickData = {
+        throttle: throttle,
+        yaw: yaw,
+      };
+      websocket.send(JSON.stringify(joystickData));
+    }
+  }
+);
 
-        if (isConnected && websocket.readyState === WebSocket.OPEN) {
-          websocket.send(`P:${pitch}|R:${roll}`);
-        }
-      }
-    );
+// Right joystick (Pitch, Roll)
+setupJoystick(
+  document.getElementById('right-joystick'),
+  document.getElementById('right-stick'),
+  (x, y, maxDistance) => {
+    const pitch = Math.round((y / maxDistance) * 100);
+    const roll = Math.round((x / maxDistance) * 100);
+
+    pitchDisplay.textContent = pitch;
+    rollDisplay.textContent = roll;
+
+    // Send pitch and roll data via WebSocket if connected
+    if (isConnected && websocket.readyState === WebSocket.OPEN) {
+      const joystickData = {
+        pitch: pitch,
+        roll: roll,
+      };
+      websocket.send(JSON.stringify(joystickData));
+    }
+  }
+);
 
     function sendPIDConstants() {
-      if (isConnected && websocket.readyState === WebSocket.OPEN) {
+    if (isConnected && websocket.readyState === WebSocket.OPEN) {
         const kpX = parseFloat(document.getElementById('kpX').value);
         const kiX = parseFloat(document.getElementById('kiX').value);
         const kdX = parseFloat(document.getElementById('kdX').value);
@@ -343,10 +361,22 @@
         const kiZ = parseFloat(document.getElementById('kiZ').value);
         const kdZ = parseFloat(document.getElementById('kdZ').value);
 
-        const pidData = `KPX:${kpX}|KIX:${kiX}|KDX:${kdX}|KPY:${kpY}|KIY:${kiY}|KDY:${kdY}|KPZ:${kpZ}|KIZ:${kiZ}|KDZ:${kdZ}`;
-        websocket.send(pidData);
-      }
+        const pidData = {
+            kpX: kpX,
+            kiX: kiX,
+            kdX: kdX,
+            kpY: kpY,
+            kiY: kiY,
+            kdY: kdY,
+            kpZ: kpZ,
+            kiZ: kiZ,
+            kdZ: kdZ
+        };
+
+        websocket.send(JSON.stringify(pidData));
     }
+}
+
 
     document.getElementById('sendPID').addEventListener('click', sendPIDConstants);
 
